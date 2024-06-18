@@ -1,0 +1,63 @@
+# Bibliotecas necessárias
+import pandas as pd
+import pywhatkit as kit
+import urllib.parse
+import time
+
+# Caminho do arquivo da planilha
+file_path = r"C:\Users\Beep Saude.BEEP1441\OneDrive\Documentos\Sales\RPA\Campanha SHINGRIX.xlsm"
+sheet_name = 'Campanha Nimenrix'  # Nome da aba da planilha correta
+
+# Caminho da imagem
+image_path = r"C:\Users\Beep Saude.BEEP1441\OneDrive\Documentos\Sales\RPA\card_PRM_pacotesmeningite.jpg"
+
+# Código do país
+codigo_pais = '+55'  # Altere conforme o código do país necessário
+
+# Verificar se a planilha existe no arquivo
+xls = pd.ExcelFile(file_path)
+if sheet_name in xls.sheet_names:
+    df = pd.read_excel(file_path, sheet_name=sheet_name)
+else:
+    raise ValueError(f"A planilha '{sheet_name}' não foi encontrada no arquivo.")
+
+# Iterar sobre cada linha da planilha
+for index, row in df.iterrows():
+    nome = row['Nome']  # Ajuste o nome da coluna conforme necessário
+    cupom = row['código original']  # Ajuste o nome da coluna conforme necessário
+    telefone = str(row['Fone 1'])  # Ajuste o nome da coluna conforme necessário
+    exec_nome = row['Executivo_nome']  # Nome do executivo responsável
+    exec_telefone = str(row['Executivo_telefone'])  # Telefone do executivo responsável
+
+    # Formatar o telefone do executivo para o padrão internacional
+    if not exec_telefone.startswith('+'):
+        exec_telefone = codigo_pais + exec_telefone
+
+    # Formatar o telefone do médico para o padrão internacional
+    if not telefone.startswith('+'):
+        telefone = codigo_pais + telefone
+
+    # Codificar o nome do executivo para URL
+    exec_nome_encoded = urllib.parse.quote(exec_nome)
+
+    # Construir a mensagem de texto com link personalizado para o executivo
+    link_executivo = f"fale com seu executivo através do link: https://wa.me/{exec_telefone}?text=Olá%20{exec_nome_encoded},%20estou%20interessado%20na%20campanha%20do%20Pacote%20Meningites%20e%20gostaria%20de%20saber%20mais.%20Obrigado!%20 "
+
+    mensagem = (f"Olá, Dr(a). {nome}!\n\n"
+                f"Seus pacientes podem evitar o risco da meningite bacteriana, fatal em 10% dos casos no Brasil, com as vacinas meningocócicas ACWY e B, que fazem parte do Pacote Meningites.\n\n"
+                f"Compartilhe o seu código de desconto e incentive a prevenção:\n\n"
+                f"*5% OFF no app!*\n\n"
+                f"*{cupom}*\n\n"
+                f"Válido até 31/12/24.\n\n"
+                f"*A vacinação é a melhor forma de combater a doença.*\n\n"
+                f"Se precisar de mais informações, {link_executivo}")
+
+    # Enviar mensagem pelo WhatsApp com imagem
+    try:
+        kit.sendwhats_image(receiver=telefone, img_path=image_path, caption=mensagem, wait_time=10, tab_close=True)
+    except Exception as e:
+        print(f"Erro ao enviar mensagem para {nome}: {e}")
+        continue  # Pular esta iteração em caso de erro
+
+    # Esperar um pouco antes de enviar a próxima mensagem
+    time.sleep(5)  # Ajuste o tempo de espera conforme necessário

@@ -1,0 +1,57 @@
+import pandas as pd
+import plotly.express as px
+from google.colab import files
+
+# Faça o upload dos arquivos CSV e XLSX
+uploaded = files.upload()
+
+# Verifique se os arquivos foram carregados corretamente
+for filename in uploaded.keys():
+    print(f'{filename} carregado com sucesso')
+
+# Carregar os arquivos CSV e XLSX
+tabela = pd.read_csv('Consulta_Executivos_Dash.csv')
+metas = pd.read_excel('metas.xlsx')
+
+# Verifique as primeiras linhas dos dados
+print(tabela.head())
+print(metas.head())
+
+# Iterar sobre os executivos e criar gráficos individuais
+for executivo in df_combinado['Executivo'].unique():
+    # Filtrar dados para o executivo atual
+    df_executivo = df_combinado[df_combinado['Executivo'] == executivo]
+
+    # Melt do DataFrame para facilitar a plotagem
+    df_executivo_melt = pd.melt(df_executivo, id_vars=['Executivo', 'Categoria'], value_vars=['Valor', 'Meta'],
+                                var_name='Tipo', value_name='Quantidade')
+
+    # Criar o gráfico para o executivo atual
+    fig = px.bar(df_executivo_melt, x='Categoria', y='Quantidade', color='Tipo',
+                 barmode='group', labels={'Quantidade': 'Total Mês (R$)'},  # Alteração do rótulo do eixo y
+                 title=f'Comparação de Valor Total e Meta para {executivo}',
+                 color_discrete_map={'Valor': cor_principal, 'Meta': cor_secundaria})
+
+    # Adicionar os rótulos de dados nas barras
+    for i, row in df_executivo_melt.iterrows():
+        tipo = row['Tipo']
+        valor = float(row['Quantidade'])  # Certifique-se de que o valor seja um número
+        texto = f'R$ {valor:,.2f}'
+
+        fig.add_annotation(
+            x=row['Categoria'], y=row['Quantidade'],
+            text=texto, showarrow=True,
+            arrowhead=0, ax=0, ay=-30,
+            font=dict(color='white', size=10),
+            align='center', arrowcolor='white'
+        )
+
+    # Ajustar o layout do gráfico
+    fig.update_layout(
+        plot_bgcolor='black',  # Fundo do gráfico
+        paper_bgcolor='black',  # Fundo da figura
+        font=dict(color='white'),  # Cor da fonte
+    )
+
+    # Exibir o gráfico
+    fig.show()
